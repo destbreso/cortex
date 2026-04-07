@@ -15,12 +15,26 @@ import {
   Sparkles,
   Copy,
   Check,
+  AlertTriangle,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { PromptTemplatesSelector } from "./prompt-templates-selector";
 import { SkillsetSelector } from "./skillset-selector";
+import { PersonalitySelector } from "./personality-selector";
 import { useConfig } from "@/hooks/use-config";
 import type { Skillset } from "@/hooks/use-skillsets";
+import type { Personality } from "@/types/config";
 
 interface Message {
   id: string;
@@ -38,35 +52,70 @@ interface ChatInterfaceProps {
   skillsets?: Skillset[];
   activeSkillsetId?: string | null;
   onSetActiveSkillset?: (id: string | null) => void;
+  isDbMode?: boolean;
+  personalities?: Personality[];
+  activePersonalityId?: string;
+  onSelectPersonality?: (id: string) => void;
+  onAddPersonality?: (data: Omit<Personality, "id">) => void;
+  onDeletePersonality?: (id: string) => void;
 }
 
 function TurnDivider({
   keepCount,
+  totalMessages,
   onRewindTo,
   onForkFrom,
 }: {
   keepCount: number;
+  totalMessages: number;
   onRewindTo?: (n: number) => void;
   onForkFrom?: (n: number) => void;
 }) {
+  const loseCount = totalMessages - keepCount;
+
   return (
     <div className="flex items-center justify-center gap-1 my-1">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground/40 hover:text-foreground"
-        onClick={() => onRewindTo?.(keepCount)}
-        title="Rewind: volver a este punto"
-      >
-        <RotateCcw className="h-2.5 w-2.5" />
-      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground/40 hover:text-foreground"
+            title="Rewind: volver a este punto"
+          >
+            <RotateCcw className="h-2.5 w-2.5" />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              Rewind
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán los últimos{" "}
+              <strong className="text-foreground">{loseCount} mensajes</strong>{" "}
+              de esta conversación. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-xs">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="text-xs bg-amber-600 hover:bg-amber-700"
+              onClick={() => onRewindTo?.(keepCount)}
+            >
+              Rewind aquí
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <span className="text-muted-foreground/20 text-[10px]">·</span>
       <Button
         size="sm"
         variant="ghost"
         className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground/40 hover:text-foreground"
         onClick={() => onForkFrom?.(keepCount)}
-        title="Fork: bifurcar conversación"
+        title="Fork: bifurcar conversación (conserva la original)"
       >
         <GitFork className="h-2.5 w-2.5" />
       </Button>
@@ -138,6 +187,12 @@ export function ChatInterface({
   skillsets = [],
   activeSkillsetId = null,
   onSetActiveSkillset,
+  isDbMode = false,
+  personalities = [],
+  activePersonalityId = "neutral",
+  onSelectPersonality,
+  onAddPersonality,
+  onDeletePersonality,
 }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -258,6 +313,7 @@ export function ChatInterface({
                   {turn.assistant && !(isLastTurn && isLoading) && (
                     <TurnDivider
                       keepCount={keepCount}
+                      totalMessages={messages.length}
                       onRewindTo={onRewindTo}
                       onForkFrom={onForkFrom}
                     />
@@ -321,6 +377,13 @@ export function ChatInterface({
 
           {/* Action bar */}
           <div className="flex items-center gap-1 mt-1.5 px-1">
+            <PersonalitySelector
+              personalities={personalities}
+              activePersonalityId={activePersonalityId}
+              onSelect={onSelectPersonality ?? (() => {})}
+              onAdd={onAddPersonality ?? (() => {})}
+              onDelete={onDeletePersonality ?? (() => {})}
+            />
             <PromptTemplatesSelector
               templates={
                 skillsets.find((s) => s.id === activeSkillsetId)
@@ -341,11 +404,13 @@ export function ChatInterface({
               <Paperclip className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Adjuntar</span>
             </Button>
-            <SkillsetSelector
-              skillsets={skillsets}
-              activeSkillsetId={activeSkillsetId}
-              onSetActive={onSetActiveSkillset ?? (() => {})}
-            />
+            {isDbMode && (
+              <SkillsetSelector
+                skillsets={skillsets}
+                activeSkillsetId={activeSkillsetId}
+                onSetActive={onSetActiveSkillset ?? (() => {})}
+              />
+            )}
 
             <div className="flex-1" />
 

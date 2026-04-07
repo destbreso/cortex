@@ -48,8 +48,10 @@ import { useConfig } from "@/hooks/use-config";
 import { useDbMode } from "@/hooks/use-db-mode";
 import { useSkillsets } from "@/hooks/use-skillsets";
 import { SkillsetManager } from "./skillset-manager";
+import { cn } from "@/lib/utils";
 
 function SkillsetManagerTab() {
+  const { isDbMode } = useDbMode();
   const {
     skillsets,
     activeSkillsetId,
@@ -58,6 +60,21 @@ function SkillsetManagerTab() {
     updateSkillset,
     deleteSkillset,
   } = useSkillsets();
+
+  if (!isDbMode) {
+    return (
+      <div className="text-center py-8 text-sm text-muted-foreground/60">
+        <Database className="h-8 w-8 mx-auto mb-2 opacity-30" />
+        <p className="font-medium text-foreground/60">
+          Base de datos requerida
+        </p>
+        <p className="mt-1 text-xs max-w-[240px] mx-auto">
+          Los skillsets se almacenan en MongoDB. Conecta una base de datos en la
+          pestaña &quot;Base de datos&quot; para usar esta función.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <SkillsetManager
@@ -587,18 +604,46 @@ export function SettingsSheet() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="system-prompt">Prompt del sistema</Label>
-                    <Textarea
-                      id="system-prompt"
-                      value={config.systemPrompt}
-                      onChange={(e) =>
-                        updateConfig({ systemPrompt: e.target.value })
-                      }
-                      placeholder="Eres un asistente útil y amigable..."
-                      rows={3}
-                    />
+                    <Label>Personalidad activa</Label>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {(config.personalities ?? []).map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className={cn(
+                            "text-[11px] px-2 py-0.5 rounded-full border transition-colors flex items-center gap-1",
+                            config.activePersonalityId === p.id
+                              ? "bg-primary/15 border-primary/30 text-primary"
+                              : "border-border/50 text-muted-foreground hover:border-primary/30 hover:text-foreground",
+                          )}
+                          onClick={() =>
+                            updateConfig({ activePersonalityId: p.id })
+                          }
+                        >
+                          <span>{p.icon}</span>
+                          {p.name}
+                        </button>
+                      ))}
+                    </div>
+                    {(() => {
+                      const activeP = (config.personalities ?? []).find(
+                        (p) => p.id === config.activePersonalityId,
+                      );
+                      return activeP?.prompt ? (
+                        <div className="bg-muted/30 rounded-lg p-2.5 text-xs text-muted-foreground leading-relaxed max-h-24 overflow-y-auto">
+                          {activeP.prompt}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground/50 italic">
+                          Sin instrucciones — el modelo responde con su
+                          comportamiento por defecto
+                        </p>
+                      );
+                    })()}
                     <p className="text-xs text-muted-foreground">
-                      Define la personalidad base del asistente
+                      Selecciona desde la barra de acciones del chat o aquí. Los
+                      skillsets sobreescriben la personalidad cuando están
+                      activos.
                     </p>
                   </div>
                 </CardContent>

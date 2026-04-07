@@ -18,36 +18,42 @@ const SYSTEM_PROMPT = `Eres el asistente integrado de "Ollama Chat", una interfa
 
 Conocimiento de la aplicación:
 - **Modelos**: Se seleccionan desde el header superior. El punto verde indica que Ollama está conectado.
-- **Conversaciones**: El sidebar izquierdo muestra el historial (requiere base de datos MongoDB). Sin DB, las conversaciones son solo de sesión.
-- **Fork/Rewind**: Al pasar el cursor entre turnos del chat aparecen botones para "Rewind" (volver a un punto) o "Fork" (bifurcar en nueva conversación).
+- **Conversaciones**: El sidebar izquierdo muestra el historial de sesiones (requiere MongoDB). Sin DB, las conversaciones son solo de sesión.
+- **Fork**: Entre cada turno del chat aparecen botones. "Fork" crea una nueva conversación bifurcada conservando la original intacta — puedes volver a ella desde el sidebar.
+- **Rewind**: "Rewind" elimina los mensajes posteriores al punto elegido (muestra confirmación indicando cuántos mensajes se perderán). Es destructivo e irreversible.
+- **Skillsets** (requiere MongoDB): Perfiles de IA que combinan un prompt de sistema, una base de conocimientos (archivos .md) y plantillas rápidas con variables. Se crean/editan en Configuración > Skillsets. Se activan desde el selector en la barra de acciones del chat. Cuando un skillset está activo, su prompt de sistema sobreescribe la personalidad base.
+- **Plantillas rápidas**: Forman parte de cada skillset. Son prompts reutilizables con variables {así}. Aparecen en la barra de acciones solo cuando hay un skillset activo que tenga plantillas.
+- **Personalidad base**: En Configuración > Chat se define el prompt de sistema por defecto. Hay presets rápidos (Neutral, Amigable, Técnico, Creativo, Didáctico, Conciso) o se puede escribir uno personalizado. Los skillsets la sobreescriben cuando están activos.
 - **Configuración** (icono de engranaje en header):
   - Conexión: URL de Ollama y timeout.
   - Modelo: Temperatura, top_p, top_k, contexto, tokens máximos, penalización de repetición, semilla.
-  - Interfaz: Tamaño de fuente, timestamps, conteo de tokens, sidebar colapsado.
-  - Base de datos: Estado de conexión a MongoDB, instrucciones para Docker, externa o Atlas.
-  - Chat: Prompt de sistema, historial máximo, streaming.
-  - Plantillas: Prompts predefinidos reutilizables.
+  - Interfaz: Tema (claro/oscuro), tamaño de fuente, timestamps, sidebar.
+  - Base de datos: Estado de conexión a MongoDB. Instrucciones para Docker, externa o Atlas.
+  - Chat: Personalidad base (presets + custom), streaming, historial máximo.
+  - Skillsets: CRUD completo de perfiles de IA (requiere DB).
   - Exportar: Exportar/importar configuración completa.
-- **Temas**: Botón sol/luna en el header para cambiar entre claro y oscuro.
-- **Persistencia**: Con MongoDB conectada, las sesiones se guardan. Sin DB, solo memoria del navegador.
+- **Temas**: Botón sol/luna en el header para cambiar entre claro y oscuro, con transición visual.
+- **Persistencia**: Con MongoDB conectada, las sesiones, skillsets y configuración se guardan. Sin DB, solo memoria del navegador (localStorage para config) y los skillsets se deshabilitan.
 - **Requisitos**: Ollama instalado y ejecutándose (ollama serve). Docker opcional para MongoDB.
 
 Si no sabes algo, dilo honestamente. No inventes funcionalidades que no existen.`;
 
 const FORTUNE_TIPS = [
   "💡 Puedes cambiar de modelo desde el selector en el header — el punto verde indica conexión activa.",
-  "🔀 Usa Fork entre turnos para bifurcar la conversación en una nueva sesión sin perder la original.",
-  "⏪ Usa Rewind para volver a un punto anterior de la conversación y reescribir desde ahí.",
+  "🔀 Usa Fork entre turnos para bifurcar la conversación — la original se conserva intacta en el sidebar.",
+  "⏪ Rewind elimina los mensajes desde el punto elegido. Se pide confirmación mostrando cuántos se perderán.",
   "🌙 Cambia entre modo claro y oscuro con el botón de sol/luna en el header.",
   "⚙️ En Configuración > Modelo puedes ajustar temperatura, top_p y contexto para controlar las respuestas.",
-  "💾 Conecta MongoDB para guardar tus conversaciones permanentemente. Sin DB, se pierden al cerrar.",
-  "📋 Usa las plantillas de prompts para reutilizar instrucciones frecuentes sin reescribirlas.",
+  "💾 Conecta MongoDB para guardar sesiones, skillsets y configuración. Sin DB, se pierden al cerrar.",
+  "🧠 Los Skillsets combinan personalidad + conocimiento + plantillas en un solo perfil de IA activable.",
   "🐳 Puedes levantar MongoDB fácilmente con Docker: mira las instrucciones en Configuración > Base de datos.",
   "📤 Exporta tu configuración completa desde Configuración > Exportar para hacer backup o migrar.",
   "🔧 Si Ollama no conecta, verifica que esté corriendo con 'ollama serve' en la terminal.",
-  "📝 El prompt de sistema se configura en Configuración > Chat — se envía como contexto a cada conversación.",
+  "🎭 Elige un preset de personalidad rápido (Amigable, Técnico, Creativo…) en Configuración > Chat.",
   "🔢 Activa el conteo de tokens en Configuración > Interfaz para monitorear el consumo de contexto.",
-  "⏱️ Puedes ajustar el timeout de conexión en Configuración > Conexión si tu modelo es lento.",
+  "📎 Sube archivos .md como base de conocimientos en tus Skillsets para dar contexto especializado al modelo.",
+  "📝 Las plantillas rápidas con variables {así} se definen dentro de cada Skillset y aparecen en la barra de acciones.",
+  "⚡ Los Skillsets requieren MongoDB — sin base de datos, el selector queda desactivado automáticamente.",
 ];
 
 interface AssistantMessage {
@@ -218,8 +224,8 @@ export function AssistantBubble({
 
                 <div className="flex flex-wrap gap-1 mt-1 justify-center">
                   {[
-                    "¿Cómo cambio de modelo?",
-                    "¿Qué es Fork?",
+                    "¿Qué son los Skillsets?",
+                    "¿Cómo funciona Fork vs Rewind?",
                     "¿Cómo conecto MongoDB?",
                   ].map((q) => (
                     <button

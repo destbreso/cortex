@@ -173,9 +173,14 @@ export function useOllama() {
             ollamaUrl: config.ollamaUrl || undefined,
             model,
             messages: [
-              // Inject system prompt (from skillset or config)
-              ...(systemMessage || config.systemPrompt
-                ? [{ role: "system" as const, content: systemMessage || config.systemPrompt }]
+              // Inject system prompt — always comes from caller (page.tsx)
+              ...(systemMessage
+                ? [
+                    {
+                      role: "system" as const,
+                      content: systemMessage,
+                    },
+                  ]
                 : []),
               ...[...messages, userMessage].map((msg) => ({
                 role: msg.role,
@@ -279,10 +284,9 @@ export function useOllama() {
   const forkFrom = useCallback(
     async (keepCount: number) => {
       const sliced = messages.slice(0, keepCount);
-      setMessages(sliced);
 
       if (isDbMode) {
-        // Create a new session immediately so it shows up in the sidebar
+        // Create a new session with the sliced messages — the old session stays untouched
         try {
           const res = await fetch("/api/sessions", {
             method: "POST",
@@ -299,17 +303,20 @@ export function useOllama() {
             for (const msg of sliced) {
               await persistMessage(session.id, msg.role, msg.content);
             }
+            // Switch to the new fork session
+            setMessages(sliced);
             setCurrentSessionId(session.id);
             sessionIdRef.current = session.id;
-          } else {
-            setCurrentSessionId(null);
-            sessionIdRef.current = null;
           }
         } catch {
+          // If DB fails, just fork in memory
+          setMessages(sliced);
           setCurrentSessionId(null);
           sessionIdRef.current = null;
         }
       } else {
+        // No DB — fork in memory (original is lost since there's no persistence)
+        setMessages(sliced);
         setCurrentSessionId(null);
         sessionIdRef.current = null;
       }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -139,7 +139,16 @@ export function Sidebar({
   onRenameSession,
 }: SidebarProps) {
   const [statsOpen, setStatsOpen] = useState(false);
-  const { config } = useConfig();
+  const { config, lastSavedAt } = useConfig();
+  const [showSaved, setShowSaved] = useState(false);
+
+  // Flash "saved" indicator when config changes
+  useEffect(() => {
+    if (!lastSavedAt) return;
+    setShowSaved(true);
+    const timer = setTimeout(() => setShowSaved(false), 1500);
+    return () => clearTimeout(timer);
+  }, [lastSavedAt]);
 
   const userMessages = messages.filter((m) => m.role === "user").length;
   const assistantMessages = messages.filter(
@@ -315,7 +324,12 @@ export function Sidebar({
           </div>
 
           {/* Config summary */}
-          <div className="bg-muted/20 rounded-lg p-2.5 text-[11px] text-sidebar-foreground/50 space-y-0.5">
+          <div className="bg-muted/20 rounded-lg p-2.5 text-[11px] text-sidebar-foreground/50 space-y-0.5 relative">
+            {showSaved && (
+              <div className="absolute -top-2 right-2 bg-emerald-500/90 text-white text-[10px] px-2 py-0.5 rounded-full animate-in fade-in slide-in-from-bottom-1 duration-200">
+                Guardado ✓
+              </div>
+            )}
             <div className="flex justify-between">
               <span>Temp</span>
               <span>{config.modelConfig.temperature}</span>
@@ -328,6 +342,19 @@ export function Sidebar({
               <span>Contexto</span>
               <span>{config.modelConfig.num_ctx} tk</span>
             </div>
+            {(() => {
+              const p = (config.personalities ?? []).find(
+                (p) => p.id === config.activePersonalityId,
+              );
+              return p && p.id !== "neutral" ? (
+                <div className="flex justify-between">
+                  <span>Personalidad</span>
+                  <span>
+                    {p.icon} {p.name}
+                  </span>
+                </div>
+              ) : null;
+            })()}
           </div>
 
           <p className="text-[10px] text-sidebar-foreground/30 text-center">

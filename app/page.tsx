@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChatInterface } from "@/components/chat-interface";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
@@ -10,6 +10,7 @@ import { useOllama } from "@/hooks/use-ollama";
 import { useConfig } from "@/hooks/use-config";
 import { useSessions } from "@/hooks/use-sessions";
 import { useSkillsets } from "@/hooks/use-skillsets";
+import type { Personality } from "@/types/config";
 
 export default function Home() {
   const [selectedModel, setSelectedModel] = useState<string>("");
@@ -28,7 +29,7 @@ export default function Home() {
     currentSessionId,
     isDbMode,
   } = useOllama();
-  const { config, isLoading: configLoading } = useConfig();
+  const { config, updateConfig, isLoading: configLoading } = useConfig();
   const {
     sessions,
     isLoading: isLoadingSessions,
@@ -46,6 +47,60 @@ export default function Home() {
     deleteSkillset,
     buildSystemMessage,
   } = useSkillsets();
+
+  // ── Compute the final system message for each interaction ───────────────
+  // Priority: skillset (if active) > personality preset > config.systemPrompt
+  const getSystemMessage = useCallback((): string | null => {
+    // 1. Skillset overrides everything
+    const skillsetMsg = buildSystemMessage();
+    if (skillsetMsg) return skillsetMsg;
+
+    // 2. Active personality
+    const activePersonality = config.personalities?.find(
+      (p) => p.id === config.activePersonalityId,
+    );
+    if (activePersonality?.prompt) return activePersonality.prompt;
+
+    // 3. Legacy systemPrompt fallback
+    if (config.systemPrompt) return config.systemPrompt;
+
+    return null;
+  }, [
+    buildSystemMessage,
+    config.personalities,
+    config.activePersonalityId,
+    config.systemPrompt,
+  ]);
+
+  // ── Personality management ──────────────────────────────────────────────
+  const setActivePersonality = useCallback(
+    (id: string) => {
+      updateConfig({ activePersonalityId: id });
+    },
+    [updateConfig],
+  );
+
+  const addPersonality = useCallback(
+    (data: Omit<Personality, "id">) => {
+      const newP: Personality = { ...data, id: Date.now().toString() };
+      updateConfig({
+        personalities: [...(config.personalities ?? []), newP],
+      });
+    },
+    [config.personalities, updateConfig],
+  );
+
+  const deletePersonality = useCallback(
+    (id: string) => {
+      updateConfig({
+        personalities: (config.personalities ?? []).filter((p) => p.id !== id),
+        ...(config.activePersonalityId === id
+          ? { activePersonalityId: "neutral" }
+          : {}),
+      });
+    },
+    [config.personalities, config.activePersonalityId, updateConfig],
+  );
 
   useEffect(() => {
     loadModels();
@@ -138,13 +193,19 @@ export default function Home() {
           messages={messages}
           isLoading={isLoading}
           onSendMessage={(message) =>
-            sendMessage(message, selectedModel, buildSystemMessage())
+            sendMessage(message, selectedModel, getSystemMessage())
           }
           onRewindTo={rewindTo}
           onForkFrom={forkFrom}
           skillsets={skillsets}
           activeSkillsetId={activeSkillsetId}
           onSetActiveSkillset={setActiveSkillset}
+          isDbMode={isDbMode}
+          personalities={config.personalities ?? []}
+          activePersonalityId={config.activePersonalityId ?? "neutral"}
+          onSelectPersonality={setActivePersonality}
+          onAddPersonality={addPersonality}
+          onDeletePersonality={deletePersonality}
         />
       </div>
 
