@@ -164,3 +164,8 @@
     opacity: 0;
   }
 }
+
+/* Utility: overflow-wrap:anywhere (not in Tailwind by default) */
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+}

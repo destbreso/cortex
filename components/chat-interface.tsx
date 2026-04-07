@@ -13,6 +13,8 @@ import {
   RotateCcw,
   Paperclip,
   Sparkles,
+  Copy,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PromptTemplatesSelector } from "./prompt-templates-selector";
@@ -63,6 +65,61 @@ function TurnDivider({
       >
         <GitFork className="h-2.5 w-2.5" />
       </Button>
+    </div>
+  );
+}
+
+function AssistantResponse({
+  content,
+  timestamp,
+}: {
+  content: string;
+  timestamp?: Date;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copyText = () => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyMarkdown = () => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="group flex items-start gap-3">
+      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground mt-0.5">
+        <Bot className="h-3.5 w-3.5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-foreground leading-relaxed whitespace-pre-wrap break-words overflow-hidden">
+          {content}
+        </div>
+        {/* Actions — visible on hover */}
+        <div className="flex items-center gap-1 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={copyText}
+            className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-foreground px-1.5 py-0.5 rounded-md hover:bg-muted/50 transition-colors"
+            title="Copiar texto"
+          >
+            {copied ? (
+              <Check className="h-3 w-3" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+            {copied ? "Copiado" : "Copiar"}
+          </button>
+          {timestamp && (
+            <span className="text-[10px] text-muted-foreground/30 ml-2">
+              {timestamp.toLocaleTimeString()}
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -154,18 +211,18 @@ export function ChatInterface({
             </div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto w-full px-4 space-y-0.5">
+          <div className="max-w-3xl mx-auto w-full px-4 space-y-4">
             {turns.map((turn, turnIndex) => {
               const isLastTurn = turnIndex === turns.length - 1;
               const keepCount = turn.endIndex + 1;
 
               return (
-                <div key={turn.user.id}>
-                  {/* User message — right */}
-                  <div className="flex justify-end py-1">
-                    <div className="flex items-end gap-2 max-w-[75%]">
-                      <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5 shadow-sm">
-                        <p className="whitespace-pre-wrap leading-relaxed break-words">
+                <div key={turn.user.id} className="space-y-3">
+                  {/* User message — bubble, right-aligned, max-width constrained */}
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] min-w-0">
+                      <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5 shadow-sm overflow-hidden">
+                        <p className="whitespace-pre-wrap leading-relaxed break-words overflow-wrap-anywhere">
                           {turn.user.content}
                         </p>
                         {config.showTimestamps && (
@@ -174,31 +231,19 @@ export function ChatInterface({
                           </p>
                         )}
                       </div>
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                        <User className="h-3.5 w-3.5" />
-                      </div>
                     </div>
                   </div>
 
-                  {/* Assistant message — left */}
+                  {/* Assistant response — open area, full width */}
                   {turn.assistant && (
-                    <div className="flex justify-start py-1">
-                      <div className="flex items-end gap-2 max-w-[75%]">
-                        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground">
-                          <Bot className="h-3.5 w-3.5" />
-                        </div>
-                        <div className="bg-card rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-[0_1px_4px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_4px_rgba(0,0,0,0.2)]">
-                          <p className="whitespace-pre-wrap leading-relaxed text-foreground break-words">
-                            {turn.assistant.content}
-                          </p>
-                          {config.showTimestamps && (
-                            <p className="text-xs mt-1.5 text-muted-foreground/60">
-                              {turn.assistant.timestamp.toLocaleTimeString()}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    <AssistantResponse
+                      content={turn.assistant.content}
+                      timestamp={
+                        config.showTimestamps
+                          ? turn.assistant.timestamp
+                          : undefined
+                      }
+                    />
                   )}
 
                   {/* Turn divider — hover to reveal */}
@@ -215,17 +260,13 @@ export function ChatInterface({
 
             {/* Thinking */}
             {isLoading && (
-              <div className="flex justify-start py-1">
-                <div className="flex items-end gap-2">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground">
-                    <Bot className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="bg-card rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-[0_1px_4px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_4px_rgba(0,0,0,0.2)]">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Pensando...</span>
-                    </div>
-                  </div>
+              <div className="flex items-start gap-3 py-1">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground mt-0.5">
+                  <Bot className="h-3.5 w-3.5" />
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground py-1">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span className="text-sm">Pensando...</span>
                 </div>
               </div>
             )}
