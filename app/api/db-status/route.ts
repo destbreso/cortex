@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { mongoClient } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   if (!process.env.DATABASE_URL) {
     return NextResponse.json({ enabled: false });

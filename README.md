@@ -150,7 +150,7 @@ docker compose down
 docker compose down -v
 
 # Follow logs
-docker logs cortex-app -f
+docker logs cortex -f
 docker logs cortex-mongo -f
 ```
 

@@ -6,7 +6,11 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "stack:up": "docker compose up --build -d",
+    "stack:down": "docker compose down",
+    "stack:restart": "docker compose down && docker compose up --build -d",
+    "stack:logs": "docker logs cortex -f"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

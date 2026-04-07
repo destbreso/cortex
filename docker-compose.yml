@@ -1,27 +1,33 @@
+name: cortex
+
 services:
-  # ── Next.js Application ──────────────────────────────────────────────────────
+  # ── Next.js Application ─────────────────────────────────────────────────────
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ollama-interface
+    container_name: cortex
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       DATABASE_URL: mongodb://ollama:ollama@mongo:27017/ollama_interface?authSource=admin
+      # host.docker.internal resolves to the host on macOS/Windows Docker Desktop.
+      # On Linux it needs extra_hosts below. Override with OLLAMA_URL env var if needed.
       OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
       NODE_ENV: production
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       mongo:
         condition: service_healthy
     networks:
-      - ollama-net
+      - cortex-net
 
   # ── MongoDB ───────────────────────────────────────────────────────────────────
   mongo:
     image: mongo:7
-    container_name: ollama-mongo
+    container_name: cortex-mongo
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ollama
@@ -47,7 +53,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - ollama-net
+      - cortex-net
 
   # ── Optional: Ollama (GPU passthrough requires Docker Desktop or nvidia-container-toolkit)
   # Uncomment if you want Ollama inside Docker instead of running on the host.
@@ -61,12 +67,12 @@ services:
   #   volumes:
   #     - ollama_data:/root/.ollama
   #   networks:
-  #     - ollama-net
+  #     - cortex-net
 
 volumes:
   mongo_data:
   # ollama_data:
 
 networks:
-  ollama-net:
+  cortex-net:
     driver: bridge
