@@ -45,23 +45,23 @@ function TurnDivider({
   onForkFrom?: (n: number) => void;
 }) {
   return (
-    <div className="flex items-center justify-center gap-1 my-1 opacity-0 hover:opacity-100 transition-opacity">
+    <div className="flex items-center justify-center gap-1 my-1">
       <Button
         size="sm"
         variant="ghost"
-        className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground/50 hover:text-foreground"
+        className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground/40 hover:text-foreground"
         onClick={() => onRewindTo?.(keepCount)}
-        title="Rewind"
+        title="Rewind: volver a este punto"
       >
         <RotateCcw className="h-2.5 w-2.5" />
       </Button>
-      <span className="text-muted-foreground/15 text-[10px]">·</span>
+      <span className="text-muted-foreground/20 text-[10px]">·</span>
       <Button
         size="sm"
         variant="ghost"
-        className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground/50 hover:text-foreground"
+        className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground/40 hover:text-foreground"
         onClick={() => onForkFrom?.(keepCount)}
-        title="Fork"
+        title="Fork: bifurcar conversación"
       >
         <GitFork className="h-2.5 w-2.5" />
       </Button>
@@ -99,11 +99,11 @@ function AssistantResponse({
         <div className="text-foreground leading-relaxed whitespace-pre-wrap break-words overflow-hidden">
           {content}
         </div>
-        {/* Actions — visible on hover */}
-        <div className="flex items-center gap-1 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Actions */}
+        <div className="flex items-center gap-1 mt-1.5">
           <button
             onClick={copyText}
-            className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-foreground px-1.5 py-0.5 rounded-md hover:bg-muted/50 transition-colors"
+            className="flex items-center gap-1 text-[11px] text-muted-foreground/40 hover:text-foreground px-1.5 py-0.5 rounded-md hover:bg-muted/50 transition-colors"
             title="Copiar texto"
           >
             {copied ? (

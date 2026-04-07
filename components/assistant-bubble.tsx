@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   HelpCircle,
@@ -33,6 +33,22 @@ Conocimiento de la aplicación:
 - **Requisitos**: Ollama instalado y ejecutándose (ollama serve). Docker opcional para MongoDB.
 
 Si no sabes algo, dilo honestamente. No inventes funcionalidades que no existen.`;
+
+const FORTUNE_TIPS = [
+  "💡 Puedes cambiar de modelo desde el selector en el header — el punto verde indica conexión activa.",
+  "🔀 Usa Fork entre turnos para bifurcar la conversación en una nueva sesión sin perder la original.",
+  "⏪ Usa Rewind para volver a un punto anterior de la conversación y reescribir desde ahí.",
+  "🌙 Cambia entre modo claro y oscuro con el botón de sol/luna en el header.",
+  "⚙️ En Configuración > Modelo puedes ajustar temperatura, top_p y contexto para controlar las respuestas.",
+  "💾 Conecta MongoDB para guardar tus conversaciones permanentemente. Sin DB, se pierden al cerrar.",
+  "📋 Usa las plantillas de prompts para reutilizar instrucciones frecuentes sin reescribirlas.",
+  "🐳 Puedes levantar MongoDB fácilmente con Docker: mira las instrucciones en Configuración > Base de datos.",
+  "📤 Exporta tu configuración completa desde Configuración > Exportar para hacer backup o migrar.",
+  "🔧 Si Ollama no conecta, verifica que esté corriendo con 'ollama serve' en la terminal.",
+  "📝 El prompt de sistema se configura en Configuración > Chat — se envía como contexto a cada conversación.",
+  "🔢 Activa el conteo de tokens en Configuración > Interfaz para monitorear el consumo de contexto.",
+  "⏱️ Puedes ajustar el timeout de conexión en Configuración > Conexión si tu modelo es lento.",
+];
 
 interface AssistantMessage {
   id: string;
@@ -72,6 +88,13 @@ export function AssistantBubble({
   useEffect(() => {
     resizeTextarea();
   }, [input, resizeTextarea]);
+
+  // Pick a random fortune tip, stable until panel reopens
+  const fortuneTip = useMemo(
+    () => FORTUNE_TIPS[Math.floor(Math.random() * FORTUNE_TIPS.length)],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isOpen],
+  );
 
   if (!isConnected || !selectedModel) return null;
 
@@ -180,13 +203,20 @@ export function AssistantBubble({
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 min-h-[200px] max-h-[340px]">
             {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full gap-2 text-center py-8">
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-6">
                 <Bot className="h-8 w-8 text-primary/30" />
-                <p className="text-xs text-muted-foreground/60 max-w-[200px]">
-                  ¿Necesitas ayuda? Pregúntame sobre cualquier función de la
-                  app.
+                <p className="text-xs text-muted-foreground/60 max-w-[240px]">
+                  ¿Necesitas ayuda? Pregúntame sobre cualquier función.
                 </p>
-                <div className="flex flex-wrap gap-1 mt-2 justify-center">
+
+                {/* Fortune tip */}
+                <div className="bg-primary/5 rounded-xl px-3 py-2.5 max-w-[280px]">
+                  <p className="text-[11px] text-foreground/70 leading-relaxed">
+                    {fortuneTip}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-1 mt-1 justify-center">
                   {[
                     "¿Cómo cambio de modelo?",
                     "¿Qué es Fork?",
