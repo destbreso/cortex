@@ -5,6 +5,7 @@ import { ChatInterface } from "@/components/chat-interface";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { ThemeSync } from "@/components/theme-sync";
+import { AssistantBubble } from "@/components/assistant-bubble";
 import { useOllama } from "@/hooks/use-ollama";
 import { useConfig } from "@/hooks/use-config";
 import { useSessions } from "@/hooks/use-sessions";
@@ -130,6 +131,11 @@ export default function Home() {
           onForkFrom={forkFrom}
         />
       </div>
+
+      <AssistantBubble
+        isConnected={connectionStatus.isConnected}
+        selectedModel={selectedModel}
+      />
     </div>
   );
 }
