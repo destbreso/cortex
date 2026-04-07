@@ -86,7 +86,7 @@ export function ExportChat({ messages }: ExportChatProps) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `ollama-chat-${timestamp}.${format}`
+    a.download = `cortex-${timestamp}.${format}`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

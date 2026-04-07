@@ -52,7 +52,7 @@ export function Header({
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" />
             <span className="text-base font-semibold text-foreground hidden sm:inline">
-              Ollama Chat
+              Cortex
             </span>
           </div>
         </div>

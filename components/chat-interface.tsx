@@ -266,10 +266,10 @@ export function ChatInterface({
                 <Bot className="h-7 w-7 text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                ¡Bienvenido a Ollama Chat!
+                Cortex
               </h3>
               <p className="text-muted-foreground text-sm">
-                Selecciona un modelo y comienza a chatear con tu IA local.
+                Selecciona un modelo y empieza a pensar.
               </p>
             </div>
           </div>
