@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
   const clientUrl = searchParams.get("ollamaUrl")
-  const ollamaUrl = clientUrl || process.env.OLLAMA_URL || "http://localhost:11434"
+  const ollamaUrl = process.env.OLLAMA_URL || clientUrl || "http://localhost:11434"
 
   try {
     console.log("[v0] Intentando conectar a Ollama en:", ollamaUrl)

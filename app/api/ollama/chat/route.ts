@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ollamaUrl = clientUrl || process.env.OLLAMA_URL || "http://localhost:11434";
+    const ollamaUrl = process.env.OLLAMA_URL || clientUrl || "http://localhost:11434";
 
     console.log("[v0] Enviando chat a Ollama:", {
       model,
