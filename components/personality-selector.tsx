@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Check, Plus, Trash2, Drama } from "lucide-react";
+import { Check, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Personality } from "@/types/config";
 
@@ -46,11 +48,12 @@ export function PersonalitySelector({
     setNewIcon("🤖");
     setNewPrompt("");
     setShowForm(false);
+    setOpen(false);
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
@@ -67,50 +70,41 @@ export function PersonalitySelector({
             {active?.name ?? "Neutral"}
           </span>
         </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-72 p-1 z-50"
-        side="top"
-        align="start"
-        sideOffset={8}
-      >
-        <div className="px-2.5 py-1.5 text-[10px] font-medium text-muted-foreground/50 uppercase tracking-wider">
-          Personalidad
-        </div>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm p-0 gap-0">
+        <DialogHeader className="px-4 pt-4 pb-2">
+          <DialogTitle className="text-sm font-medium">
+            Personalidad
+          </DialogTitle>
+        </DialogHeader>
 
-        <div className="max-h-[280px] overflow-y-auto space-y-0.5">
+        <div className="max-h-[320px] overflow-y-auto space-y-0.5 px-2 pb-1">
           {personalities.map((p) => {
             const isActive = p.id === activePersonalityId;
             return (
               <div
                 key={p.id}
                 className={cn(
-                  "flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors group",
+                  "flex items-center gap-2 px-2.5 py-2 rounded-md text-xs transition-colors group cursor-pointer",
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-foreground hover:bg-muted/60",
                 )}
+                onClick={() => {
+                  onSelect(p.id);
+                  setOpen(false);
+                }}
               >
-                <button
-                  className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                  onClick={() => {
-                    onSelect(p.id);
-                    setOpen(false);
-                  }}
-                >
-                  <span className="text-sm leading-none shrink-0">
-                    {p.icon}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate font-medium">{p.name}</p>
-                    {p.prompt && (
-                      <p className="truncate text-[10px] text-muted-foreground/50 mt-0.5">
-                        {p.prompt.slice(0, 60)}…
-                      </p>
-                    )}
-                  </div>
-                  {isActive && <Check className="h-3 w-3 shrink-0" />}
-                </button>
+                <span className="text-sm leading-none shrink-0">{p.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate font-medium">{p.name}</p>
+                  {p.prompt && (
+                    <p className="truncate text-[10px] text-muted-foreground/50 mt-0.5">
+                      {p.prompt.slice(0, 60)}…
+                    </p>
+                  )}
+                </div>
+                {isActive && <Check className="h-3 w-3 shrink-0" />}
                 {!p.isBuiltIn && (
                   <button
                     className="h-5 w-5 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-destructive/60 hover:text-destructive hover:bg-destructive/10 transition-all shrink-0"
@@ -130,7 +124,7 @@ export function PersonalitySelector({
 
         {/* Create new */}
         {showForm ? (
-          <div className="border-t border-border/30 mt-1 pt-2 px-2 pb-1 space-y-1.5">
+          <div className="border-t border-border/30 px-4 py-3 space-y-2">
             <div className="flex gap-1.5">
               <Input
                 value={newIcon}
@@ -152,18 +146,18 @@ export function PersonalitySelector({
               rows={3}
               className="w-full resize-none bg-input rounded-md px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30"
             />
-            <div className="flex justify-end gap-1">
+            <div className="flex justify-end gap-1.5">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 text-[11px]"
+                className="h-7 text-xs"
                 onClick={() => setShowForm(false)}
               >
                 Cancelar
               </Button>
               <Button
                 size="sm"
-                className="h-6 text-[11px]"
+                className="h-7 text-xs"
                 onClick={handleAdd}
                 disabled={!newName.trim() || !newPrompt.trim()}
               >
@@ -172,15 +166,17 @@ export function PersonalitySelector({
             </div>
           </div>
         ) : (
-          <button
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-muted-foreground/60 hover:bg-muted/60 hover:text-foreground transition-colors mt-0.5 border-t border-border/30 pt-2"
-            onClick={() => setShowForm(true)}
-          >
-            <Plus className="h-3 w-3" />
-            Nueva personalidad
-          </button>
+          <div className="border-t border-border/30 px-2 py-2">
+            <button
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs text-muted-foreground/60 hover:bg-muted/60 hover:text-foreground transition-colors"
+              onClick={() => setShowForm(true)}
+            >
+              <Plus className="h-3 w-3" />
+              Nueva personalidad
+            </button>
+          </div>
         )}
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }
