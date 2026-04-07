@@ -24,8 +24,10 @@ export async function POST(req: Request) {
   const doc = {
     _id: crypto.randomUUID(),
     name: body.name,
-    description: body.description ?? null,
-    systemPrompt: body.systemPrompt,
+    description: body.description ?? "",
+    systemPrompt: body.systemPrompt ?? "",
+    knowledgeBase: body.knowledgeBase ?? "",
+    promptTemplates: Array.isArray(body.promptTemplates) ? body.promptTemplates : [],
     parameters: body.parameters ?? {},
     category: body.category ?? "custom",
     isBuiltIn: false,

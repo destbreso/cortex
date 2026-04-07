@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PromptTemplatesSelector } from "./prompt-templates-selector";
+import { SkillsetSelector } from "./skillset-selector";
 import { useConfig } from "@/hooks/use-config";
+import type { Skillset } from "@/hooks/use-skillsets";
 
 interface Message {
   id: string;
@@ -33,6 +35,9 @@ interface ChatInterfaceProps {
   onSendMessage: (message: string) => void;
   onRewindTo?: (keepCount: number) => void;
   onForkFrom?: (keepCount: number) => void;
+  skillsets?: Skillset[];
+  activeSkillsetId?: string | null;
+  onSetActiveSkillset?: (id: string | null) => void;
 }
 
 function TurnDivider({
@@ -130,6 +135,9 @@ export function ChatInterface({
   onSendMessage,
   onRewindTo,
   onForkFrom,
+  skillsets = [],
+  activeSkillsetId = null,
+  onSetActiveSkillset,
 }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -314,6 +322,10 @@ export function ChatInterface({
           {/* Action bar */}
           <div className="flex items-center gap-1 mt-1.5 px-1">
             <PromptTemplatesSelector
+              templates={
+                skillsets.find((s) => s.id === activeSkillsetId)
+                  ?.promptTemplates ?? []
+              }
               onSelectTemplate={(t) => {
                 setInput(t);
                 textareaRef.current?.focus();
@@ -329,16 +341,11 @@ export function ChatInterface({
               <Paperclip className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Adjuntar</span>
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground/60 hover:text-foreground gap-1"
-              title="Skills (próximamente)"
-              disabled
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Skills</span>
-            </Button>
+            <SkillsetSelector
+              skillsets={skillsets}
+              activeSkillsetId={activeSkillsetId}
+              onSetActive={onSetActiveSkillset ?? (() => {})}
+            />
 
             <div className="flex-1" />
 

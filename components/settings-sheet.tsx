@@ -46,7 +46,30 @@ import {
 } from "lucide-react";
 import { useConfig } from "@/hooks/use-config";
 import { useDbMode } from "@/hooks/use-db-mode";
-import type { PromptTemplate } from "@/types/config";
+import { useSkillsets } from "@/hooks/use-skillsets";
+import { SkillsetManager } from "./skillset-manager";
+
+function SkillsetManagerTab() {
+  const {
+    skillsets,
+    activeSkillsetId,
+    setActive,
+    createSkillset,
+    updateSkillset,
+    deleteSkillset,
+  } = useSkillsets();
+
+  return (
+    <SkillsetManager
+      skillsets={skillsets}
+      activeSkillsetId={activeSkillsetId}
+      onSetActive={setActive}
+      onCreate={createSkillset}
+      onUpdate={updateSkillset}
+      onDelete={deleteSkillset}
+    />
+  );
+}
 
 export function SettingsSheet() {
   const { config, updateConfig, resetConfig, exportConfig, importConfig } =
@@ -57,12 +80,6 @@ export function SettingsSheet() {
     "idle" | "testing" | "ok" | "error"
   >("idle");
   const [dbTestMsg, setDbTestMsg] = useState("");
-  const [newTemplate, setNewTemplate] = useState<Partial<PromptTemplate>>({
-    name: "",
-    description: "",
-    template: "",
-    category: "custom",
-  });
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -71,36 +88,6 @@ export function SettingsSheet() {
         .then(() => alert("Configuración importada exitosamente"))
         .catch(() => alert("Error al importar configuración"));
     }
-  };
-
-  const addPromptTemplate = () => {
-    if (!newTemplate.name || !newTemplate.template) return;
-    const template: PromptTemplate = {
-      id: Date.now().toString(),
-      name: newTemplate.name,
-      description: newTemplate.description || "",
-      template: newTemplate.template,
-      variables: extractVariables(newTemplate.template),
-      category: (newTemplate.category as any) || "custom",
-    };
-    updateConfig({ promptTemplates: [...config.promptTemplates, template] });
-    setNewTemplate({
-      name: "",
-      description: "",
-      template: "",
-      category: "custom",
-    });
-  };
-
-  const removePromptTemplate = (id: string) => {
-    updateConfig({
-      promptTemplates: config.promptTemplates.filter((t) => t.id !== id),
-    });
-  };
-
-  const extractVariables = (template: string): string[] => {
-    const matches = template.match(/\{([^}]+)\}/g);
-    return matches ? matches.map((match) => match.slice(1, -1)) : [];
   };
 
   const testDbConnection = async () => {
@@ -165,7 +152,7 @@ export function SettingsSheet() {
             </TabsList>
             <TabsList className="grid w-full grid-cols-3 mb-4">
               <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="templates">Plantillas</TabsTrigger>
+              <TabsTrigger value="skillsets">Skillsets</TabsTrigger>
               <TabsTrigger value="export">Exportar</TabsTrigger>
             </TabsList>
 
@@ -618,109 +605,9 @@ export function SettingsSheet() {
               </Card>
             </TabsContent>
 
-            {/* ── Plantillas ── */}
-            <TabsContent value="templates" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Plantillas de Prompts</CardTitle>
-                  <CardDescription>
-                    Crea y gestiona plantillas reutilizables
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input
-                      placeholder="Nombre de la plantilla"
-                      value={newTemplate.name}
-                      onChange={(e) =>
-                        setNewTemplate({ ...newTemplate, name: e.target.value })
-                      }
-                    />
-                    <Select
-                      value={newTemplate.category}
-                      onValueChange={(value: any) =>
-                        setNewTemplate({ ...newTemplate, category: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Categoría" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="general">General</SelectItem>
-                        <SelectItem value="coding">Programación</SelectItem>
-                        <SelectItem value="creative">Creativo</SelectItem>
-                        <SelectItem value="analysis">Análisis</SelectItem>
-                        <SelectItem value="custom">Personalizado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Input
-                    placeholder="Descripción (opcional)"
-                    value={newTemplate.description}
-                    onChange={(e) =>
-                      setNewTemplate({
-                        ...newTemplate,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-                  <Textarea
-                    placeholder="Plantilla (usa {variable} para variables)"
-                    value={newTemplate.template}
-                    onChange={(e) =>
-                      setNewTemplate({
-                        ...newTemplate,
-                        template: e.target.value,
-                      })
-                    }
-                    rows={3}
-                  />
-                  <Button onClick={addPromptTemplate} className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar Plantilla
-                  </Button>
-                  <div className="space-y-2">
-                    {config.promptTemplates.map((template) => (
-                      <div
-                        key={template.id}
-                        className="flex items-center justify-between p-3 border rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{template.name}</h4>
-                            <Badge variant="secondary">
-                              {template.category}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {template.description}
-                          </p>
-                          {template.variables.length > 0 && (
-                            <div className="flex gap-1 mt-1">
-                              {template.variables.map((v) => (
-                                <Badge
-                                  key={v}
-                                  variant="outline"
-                                  className="text-xs"
-                                >
-                                  {v}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removePromptTemplate(template.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+            {/* ── Skillsets ── */}
+            <TabsContent value="skillsets" className="space-y-4">
+              <SkillsetManagerTab />
             </TabsContent>
 
             {/* ── Exportar ── */}

@@ -15,6 +15,8 @@ export async function PATCH(
     "name",
     "description",
     "systemPrompt",
+    "knowledgeBase",
+    "promptTemplates",
     "parameters",
     "category",
   ] as const;

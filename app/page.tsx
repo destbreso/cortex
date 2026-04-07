@@ -9,6 +9,7 @@ import { AssistantBubble } from "@/components/assistant-bubble";
 import { useOllama } from "@/hooks/use-ollama";
 import { useConfig } from "@/hooks/use-config";
 import { useSessions } from "@/hooks/use-sessions";
+import { useSkillsets } from "@/hooks/use-skillsets";
 
 export default function Home() {
   const [selectedModel, setSelectedModel] = useState<string>("");
@@ -35,6 +36,16 @@ export default function Home() {
     deleteSession,
     renameSession,
   } = useSessions();
+  const {
+    skillsets,
+    activeSkillset,
+    activeSkillsetId,
+    setActive: setActiveSkillset,
+    createSkillset,
+    updateSkillset,
+    deleteSkillset,
+    buildSystemMessage,
+  } = useSkillsets();
 
   useEffect(() => {
     loadModels();
@@ -126,9 +137,14 @@ export default function Home() {
         <ChatInterface
           messages={messages}
           isLoading={isLoading}
-          onSendMessage={(message) => sendMessage(message, selectedModel)}
+          onSendMessage={(message) =>
+            sendMessage(message, selectedModel, buildSystemMessage())
+          }
           onRewindTo={rewindTo}
           onForkFrom={forkFrom}
+          skillsets={skillsets}
+          activeSkillsetId={activeSkillsetId}
+          onSetActiveSkillset={setActiveSkillset}
         />
       </div>
 

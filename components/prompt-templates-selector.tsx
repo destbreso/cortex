@@ -1,73 +1,104 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BookTemplate as Template, Search } from "lucide-react"
-import { useConfig } from "@/hooks/use-config"
-import type { PromptTemplate } from "@/types/config"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { BookTemplate as Template, Search } from "lucide-react";
+import type { PromptTemplate } from "@/hooks/use-skillsets";
 
 interface PromptTemplatesSelectorProps {
-  onSelectTemplate: (template: string) => void
+  templates: PromptTemplate[];
+  onSelectTemplate: (template: string) => void;
 }
 
-export function PromptTemplatesSelector({ onSelectTemplate }: PromptTemplatesSelectorProps) {
-  const { config } = useConfig()
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(null)
-  const [variables, setVariables] = useState<Record<string, string>>({})
+export function PromptTemplatesSelector({
+  templates,
+  onSelectTemplate,
+}: PromptTemplatesSelectorProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<PromptTemplate | null>(null);
+  const [variables, setVariables] = useState<Record<string, string>>({});
 
-  const filteredTemplates = config.promptTemplates.filter(
+  const filteredTemplates = templates.filter(
     (template) =>
       template.name.toLowerCase().includes(search.toLowerCase()) ||
       template.description.toLowerCase().includes(search.toLowerCase()) ||
       template.category.toLowerCase().includes(search.toLowerCase()),
-  )
+  );
 
   const handleTemplateSelect = (template: PromptTemplate) => {
-    setSelectedTemplate(template)
-    const initialVariables: Record<string, string> = {}
+    setSelectedTemplate(template);
+    const initialVariables: Record<string, string> = {};
     template.variables.forEach((variable) => {
-      initialVariables[variable] = ""
-    })
-    setVariables(initialVariables)
-  }
+      initialVariables[variable] = "";
+    });
+    setVariables(initialVariables);
+  };
 
   const handleUseTemplate = () => {
-    if (!selectedTemplate) return
+    if (!selectedTemplate) return;
 
-    let finalPrompt = selectedTemplate.template
+    let finalPrompt = selectedTemplate.template;
     Object.entries(variables).forEach(([key, value]) => {
-      finalPrompt = finalPrompt.replace(new RegExp(`\\{${key}\\}`, "g"), value)
-    })
+      finalPrompt = finalPrompt.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+    });
 
-    onSelectTemplate(finalPrompt)
-    setOpen(false)
-    setSelectedTemplate(null)
-    setVariables({})
-  }
+    onSelectTemplate(finalPrompt);
+    setOpen(false);
+    setSelectedTemplate(null);
+    setVariables({});
+  };
 
   const groupedTemplates = filteredTemplates.reduce(
     (acc, template) => {
       if (!acc[template.category]) {
-        acc[template.category] = []
+        acc[template.category] = [];
       }
-      acc[template.category].push(template)
-      return acc
+      acc[template.category].push(template);
+      return acc;
     },
     {} as Record<string, PromptTemplate[]>,
-  )
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Template className="h-4 w-4" />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs gap-1 text-muted-foreground/60 hover:text-foreground"
+          disabled={templates.length === 0}
+          title={
+            templates.length === 0
+              ? "El skillset activo no tiene plantillas"
+              : "Plantillas rápidas"
+          }
+        >
+          <Template className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Plantillas</span>
+          {templates.length > 0 && (
+            <span className="text-[10px] text-muted-foreground/40">
+              {templates.length}
+            </span>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -91,15 +122,22 @@ export function PromptTemplatesSelector({ onSelectTemplate }: PromptTemplatesSel
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   {selectedTemplate.name}
-                  <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedTemplate(null)}
+                  >
                     Volver
                   </Button>
                 </CardTitle>
-                <CardDescription>{selectedTemplate.description}</CardDescription>
+                <CardDescription>
+                  {selectedTemplate.description}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="p-3 bg-muted rounded-lg">
-                  <pre className="text-sm whitespace-pre-wrap">{selectedTemplate.template}</pre>
+                  <pre className="text-sm whitespace-pre-wrap">
+                    {selectedTemplate.template}
+                  </pre>
                 </div>
 
                 {selectedTemplate.variables.length > 0 && (
@@ -111,7 +149,12 @@ export function PromptTemplatesSelector({ onSelectTemplate }: PromptTemplatesSel
                         <Input
                           id={variable}
                           value={variables[variable] || ""}
-                          onChange={(e) => setVariables({ ...variables, [variable]: e.target.value })}
+                          onChange={(e) =>
+                            setVariables({
+                              ...variables,
+                              [variable]: e.target.value,
+                            })
+                          }
                           placeholder={`Ingresa valor para ${variable}`}
                         />
                       </div>
@@ -139,15 +182,23 @@ export function PromptTemplatesSelector({ onSelectTemplate }: PromptTemplatesSel
                         <CardHeader className="pb-2">
                           <CardTitle className="text-base flex items-center justify-between">
                             {template.name}
-                            <Badge variant="secondary">{template.category}</Badge>
+                            <Badge variant="secondary">
+                              {template.category}
+                            </Badge>
                           </CardTitle>
-                          <CardDescription className="text-sm">{template.description}</CardDescription>
+                          <CardDescription className="text-sm">
+                            {template.description}
+                          </CardDescription>
                         </CardHeader>
                         {template.variables.length > 0 && (
                           <CardContent className="pt-0">
                             <div className="flex gap-1 flex-wrap">
                               {template.variables.map((variable) => (
-                                <Badge key={variable} variant="outline" className="text-xs">
+                                <Badge
+                                  key={variable}
+                                  variant="outline"
+                                  className="text-xs"
+                                >
                                   {variable}
                                 </Badge>
                               ))}
@@ -164,5 +215,5 @@ export function PromptTemplatesSelector({ onSelectTemplate }: PromptTemplatesSel
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

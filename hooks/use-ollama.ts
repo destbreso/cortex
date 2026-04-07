@@ -111,7 +111,7 @@ export function useOllama() {
   }, [config.timeout]);
 
   const sendMessage = useCallback(
-    async (content: string, model: string) => {
+    async (content: string, model: string, systemMessage?: string | null) => {
       if (!content.trim() || !model) return;
       lastModelRef.current = model;
 
@@ -172,10 +172,16 @@ export function useOllama() {
           body: JSON.stringify({
             ollamaUrl: config.ollamaUrl || undefined,
             model,
-            messages: [...messages, userMessage].map((msg) => ({
-              role: msg.role,
-              content: msg.content,
-            })),
+            messages: [
+              // Inject system prompt (from skillset or config)
+              ...(systemMessage || config.systemPrompt
+                ? [{ role: "system" as const, content: systemMessage || config.systemPrompt }]
+                : []),
+              ...[...messages, userMessage].map((msg) => ({
+                role: msg.role,
+                content: msg.content,
+              })),
+            ],
             options: {
               temperature: config.modelConfig.temperature,
               top_p: config.modelConfig.top_p,
