@@ -35,46 +35,26 @@ function TurnDivider({
   onForkFrom?: (n: number) => void;
 }) {
   return (
-    <div className="group relative flex items-center gap-2 my-2 px-4">
-      {/* Line always visible, brightens on hover */}
-      <div
-        className="flex-1 h-px bg-border/50 group-hover:bg-border transition-colors"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(90deg,currentColor 0,currentColor 4px,transparent 4px,transparent 8px)",
-        }}
-      />
-      {/* Buttons always visible, subtle by default */}
-      <div className="flex items-center gap-0.5">
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 px-2 text-[11px] gap-1 text-muted-foreground/50 hover:text-foreground hover:bg-muted/60 transition-colors"
-          onClick={() => onRewindTo?.(keepCount)}
-          title="Rewind: volver a este punto en la misma conversación"
-        >
-          <RotateCcw className="h-3 w-3" />
-          Rewind
-        </Button>
-        <span className="text-muted-foreground/20 text-xs select-none">·</span>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 px-2 text-[11px] gap-1 text-muted-foreground/50 hover:text-foreground hover:bg-muted/60 transition-colors"
-          onClick={() => onForkFrom?.(keepCount)}
-          title="Fork: bifurcar en una nueva conversación desde este punto"
-        >
-          <GitFork className="h-3 w-3" />
-          Fork
-        </Button>
-      </div>
-      <div
-        className="flex-1 h-px bg-border/50 group-hover:bg-border transition-colors"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(90deg,currentColor 0,currentColor 4px,transparent 4px,transparent 8px)",
-        }}
-      />
+    <div className="flex items-center justify-center gap-1 my-1 opacity-0 hover:opacity-100 transition-opacity">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground/50 hover:text-foreground"
+        onClick={() => onRewindTo?.(keepCount)}
+        title="Rewind"
+      >
+        <RotateCcw className="h-2.5 w-2.5" />
+      </Button>
+      <span className="text-muted-foreground/15 text-[10px]">·</span>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-5 px-1.5 text-[10px] gap-1 text-muted-foreground/50 hover:text-foreground"
+        onClick={() => onForkFrom?.(keepCount)}
+        title="Fork"
+      >
+        <GitFork className="h-2.5 w-2.5" />
+      </Button>
     </div>
   );
 }
@@ -110,7 +90,7 @@ export function ChatInterface({
     }
   };
 
-  // Group messages into turns: [{user, assistant|null, endIndex}]
+  // Group messages into turns
   const turns: {
     user: Message;
     assistant: Message | null;
@@ -137,7 +117,7 @@ export function ChatInterface({
         "text-lg": config.fontSize === "large",
       })}
     >
-      {/* Messages Area */}
+      {/* Messages — scrollable */}
       <div className="flex-1 overflow-y-auto py-6">
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center px-4">
@@ -154,15 +134,15 @@ export function ChatInterface({
             </div>
           </div>
         ) : (
-          <div className="space-y-0.5">
+          <div className="max-w-3xl mx-auto w-full px-4 space-y-0.5">
             {turns.map((turn, turnIndex) => {
               const isLastTurn = turnIndex === turns.length - 1;
               const keepCount = turn.endIndex + 1;
 
               return (
                 <div key={turn.user.id}>
-                  {/* User message — right aligned */}
-                  <div className="flex justify-end px-4 py-1">
+                  {/* User message — right */}
+                  <div className="flex justify-end py-1">
                     <div className="flex items-end gap-2 max-w-[75%]">
                       <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5 shadow-sm">
                         <p className="whitespace-pre-wrap leading-relaxed">
@@ -174,20 +154,20 @@ export function ChatInterface({
                           </p>
                         )}
                       </div>
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-primary">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                         <User className="h-3.5 w-3.5" />
                       </div>
                     </div>
                   </div>
 
-                  {/* Assistant message — left aligned */}
+                  {/* Assistant message — left */}
                   {turn.assistant && (
-                    <div className="flex justify-start px-4 py-1">
+                    <div className="flex justify-start py-1">
                       <div className="flex items-end gap-2 max-w-[75%]">
-                        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted border border-border/40 flex items-center justify-center text-muted-foreground">
+                        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground">
                           <Bot className="h-3.5 w-3.5" />
                         </div>
-                        <div className="bg-card border border-border/60 rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-sm">
+                        <div className="bg-card rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-[0_1px_4px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_4px_rgba(0,0,0,0.2)]">
                           <p className="whitespace-pre-wrap leading-relaxed text-foreground">
                             {turn.assistant.content}
                           </p>
@@ -201,7 +181,7 @@ export function ChatInterface({
                     </div>
                   )}
 
-                  {/* Turn divider — hidden for last turn while loading */}
+                  {/* Turn divider — hover to reveal */}
                   {turn.assistant && !(isLastTurn && isLoading) && (
                     <TurnDivider
                       keepCount={keepCount}
@@ -213,14 +193,14 @@ export function ChatInterface({
               );
             })}
 
-            {/* Thinking indicator */}
+            {/* Thinking */}
             {isLoading && (
-              <div className="flex justify-start px-4 py-1">
+              <div className="flex justify-start py-1">
                 <div className="flex items-end gap-2">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted border border-border/40 flex items-center justify-center text-muted-foreground">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-muted-foreground">
                     <Bot className="h-3.5 w-3.5" />
                   </div>
-                  <div className="bg-card border border-border/60 rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-sm">
+                  <div className="bg-card rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-[0_1px_4px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_4px_rgba(0,0,0,0.2)]">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       <span>Pensando...</span>
@@ -235,17 +215,17 @@ export function ChatInterface({
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-border bg-card/50 backdrop-blur-sm p-4">
-        <form onSubmit={handleSubmit} className="flex gap-2">
+      {/* Input — pinned at bottom */}
+      <div className="bg-background/80 backdrop-blur-md shadow-[0_-2px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_-2px_12px_rgba(0,0,0,0.2)] p-4">
+        <form onSubmit={handleSubmit} className="flex gap-2 max-w-3xl mx-auto">
           <div className="flex-1">
             <Textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Escribe tu mensaje aquí... (Enter para enviar, Shift+Enter para nueva línea)"
-              className="min-h-[60px] max-h-[200px] resize-none"
+              placeholder="Escribe tu mensaje… (Enter para enviar)"
+              className="min-h-[52px] max-h-[200px] resize-none rounded-xl bg-card shadow-sm border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
               disabled={isLoading}
             />
           </div>
@@ -258,7 +238,7 @@ export function ChatInterface({
           <Button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="self-end"
+            className="self-end rounded-xl h-[52px] px-4"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

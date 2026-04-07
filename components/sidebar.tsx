@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   X,
@@ -10,7 +9,6 @@ import {
   MessageSquare,
   BarChart3,
   Plus,
-  History,
   Pencil,
   Check,
   Database,
@@ -35,7 +33,6 @@ interface SidebarProps {
   onClose: () => void;
   onClearChat: () => void;
   messages: Message[];
-  // session management
   sessions: SessionSummary[];
   isDbMode: boolean;
   activeSessionId: string | null;
@@ -71,8 +68,8 @@ function SessionItem({
       className={cn(
         "group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors",
         isActive
-          ? "bg-sidebar-primary/15 text-sidebar-primary"
-          : "hover:bg-sidebar-accent/20 text-sidebar-foreground/80",
+          ? "bg-primary/10 text-primary"
+          : "hover:bg-muted/60 text-sidebar-foreground/80",
       )}
       onClick={() => !editing && onLoad()}
     >
@@ -101,7 +98,7 @@ function SessionItem({
 
       <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
         <button
-          className="p-0.5 rounded hover:bg-sidebar-accent/30"
+          className="p-0.5 rounded hover:bg-muted/80"
           onClick={(e) => {
             e.stopPropagation();
             setEditing(true);
@@ -158,73 +155,69 @@ export function Sidebar({
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 md:hidden"
           onClick={onClose}
         />
       )}
 
       <div
         className={cn(
-          "fixed left-0 top-0 h-full w-72 bg-sidebar border-r border-sidebar-border z-50 transform transition-transform duration-200 ease-in-out flex flex-col",
+          "fixed left-0 top-0 h-full w-72 bg-sidebar z-50 transform transition-transform duration-200 ease-in-out flex flex-col",
+          "shadow-[4px_0_16px_rgba(0,0,0,0.06)] dark:shadow-[4px_0_16px_rgba(0,0,0,0.3)]",
           "md:relative md:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border shrink-0">
+        {/* Header — matches main header h-14 */}
+        <div className="flex items-center justify-between px-4 h-14 shrink-0">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-sidebar-foreground">
-              Ollama Chat
+              Conversaciones
             </h2>
             {isDbMode ? (
-              <span className="flex items-center gap-1 text-[10px] text-green-500 bg-green-500/10 rounded px-1.5 py-0.5">
+              <span className="flex items-center gap-1 text-[10px] text-emerald-500 bg-emerald-500/10 rounded-full px-2 py-0.5">
                 <Database className="h-2.5 w-2.5" />
                 DB
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/40 rounded px-1.5 py-0.5">
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground bg-muted/50 rounded-full px-2 py-0.5">
                 <WifiOff className="h-2.5 w-2.5" />
                 Local
               </span>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="md:hidden h-7 w-7 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-sidebar-foreground/60 hover:text-sidebar-foreground"
+              onClick={onClearChat}
+              title="Nueva conversación"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="md:hidden h-7 w-7"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
-        {/* Sessions list (DB mode) */}
-        {isDbMode && (
-          <div className="flex flex-col flex-1 min-h-0 border-b border-sidebar-border">
-            <div className="flex items-center justify-between px-4 py-2 shrink-0">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-sidebar-foreground/70">
-                <History className="h-3.5 w-3.5" />
-                Conversaciones
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 text-sidebar-foreground/60 hover:text-sidebar-foreground"
-                onClick={onClearChat}
-                title="Nueva conversación"
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
+        {/* Sessions list — scrollable */}
+        <div className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5 min-h-0">
+          {isDbMode ? (
+            <>
               {isLoadingSessions && (
                 <p className="text-xs text-sidebar-foreground/40 px-3 py-2">
                   Cargando...
                 </p>
               )}
               {!isLoadingSessions && sessions.length === 0 && (
-                <p className="text-xs text-sidebar-foreground/40 px-3 py-4 text-center">
+                <p className="text-xs text-sidebar-foreground/40 px-3 py-8 text-center">
                   Sin conversaciones guardadas
                 </p>
               )}
@@ -238,17 +231,21 @@ export function Sidebar({
                   onRename={(title) => onRenameSession(s.id, title)}
                 />
               ))}
-            </div>
-          </div>
-        )}
+            </>
+          ) : (
+            <p className="text-xs text-sidebar-foreground/40 px-3 py-8 text-center">
+              Conecta una base de datos para guardar conversaciones
+            </p>
+          )}
+        </div>
 
-        {/* Current chat stats + actions */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {/* Bottom section — stats + actions */}
+        <div className="shrink-0 px-3 pb-3 pt-2 space-y-2">
           {/* Stats collapsible */}
           {messages.length > 0 && (
             <div>
               <button
-                className="w-full flex items-center gap-2 text-xs font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground mb-1"
+                className="w-full flex items-center gap-2 text-xs font-medium text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors mb-1"
                 onClick={() => setStatsOpen((v) => !v)}
               >
                 <BarChart3 className="h-3.5 w-3.5" />
@@ -261,7 +258,7 @@ export function Sidebar({
               </button>
 
               {statsOpen && (
-                <Card className="p-3 bg-sidebar-accent/5 text-xs text-sidebar-foreground/70 space-y-1">
+                <div className="bg-muted/30 rounded-lg p-3 text-xs text-sidebar-foreground/60 space-y-1">
                   <div className="flex justify-between">
                     <span>Mensajes</span>
                     <span className="text-sidebar-foreground">
@@ -282,7 +279,7 @@ export function Sidebar({
                       </span>
                     </div>
                   )}
-                  {messages.length > 1 && (
+                  {messages.length > 1 && lastMessage && (
                     <div className="flex justify-between">
                       <span>Duración</span>
                       <span className="text-sidebar-foreground">
@@ -295,24 +292,18 @@ export function Sidebar({
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span>Msg más largo</span>
-                    <span className="text-sidebar-foreground">
-                      {Math.max(...messages.map((m) => m.content.length))} ch
-                    </span>
-                  </div>
-                </Card>
+                </div>
               )}
             </div>
           )}
 
           {/* Actions */}
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {!isDbMode && (
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="w-full justify-start gap-2 bg-transparent text-xs"
+                className="w-full justify-start gap-2 text-xs text-sidebar-foreground/60 hover:text-sidebar-foreground"
                 onClick={onClearChat}
                 disabled={messages.length === 0}
               >
@@ -323,13 +314,10 @@ export function Sidebar({
             <ExportChat messages={messages} />
           </div>
 
-          {/* Modelo config mini */}
-          <Card className="p-3 bg-sidebar-accent/5 text-xs text-sidebar-foreground/70 space-y-1">
-            <div className="font-medium text-sidebar-foreground mb-1">
-              Configuración activa
-            </div>
+          {/* Config summary */}
+          <div className="bg-muted/20 rounded-lg p-2.5 text-[11px] text-sidebar-foreground/50 space-y-0.5">
             <div className="flex justify-between">
-              <span>Temperatura</span>
+              <span>Temp</span>
               <span>{config.modelConfig.temperature}</span>
             </div>
             <div className="flex justify-between">
@@ -340,12 +328,9 @@ export function Sidebar({
               <span>Contexto</span>
               <span>{config.modelConfig.num_ctx} tk</span>
             </div>
-          </Card>
-        </div>
+          </div>
 
-        {/* Footer */}
-        <div className="px-4 py-2 border-t border-sidebar-border shrink-0">
-          <p className="text-[10px] text-sidebar-foreground/40 text-center">
+          <p className="text-[10px] text-sidebar-foreground/30 text-center">
             Ollama Interface v2.0
           </p>
         </div>
