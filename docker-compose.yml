@@ -1,0 +1,72 @@
+services:
+  # ── Next.js Application ──────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ollama-interface
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: mongodb://ollama:ollama@mongo:27017/ollama_interface?authSource=admin
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      NODE_ENV: production
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - ollama-net
+
+  # ── MongoDB ───────────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: ollama-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ollama
+      MONGO_INITDB_ROOT_PASSWORD: ollama
+      MONGO_INITDB_DATABASE: ollama_interface
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--username",
+          "ollama",
+          "--password",
+          "ollama",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.adminCommand('ping')",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ollama-net
+
+  # ── Optional: Ollama (GPU passthrough requires Docker Desktop or nvidia-container-toolkit)
+  # Uncomment if you want Ollama inside Docker instead of running on the host.
+  #
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama-server
+  #   restart: unless-stopped
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   networks:
+  #     - ollama-net
+
+volumes:
+  mongo_data:
+  # ollama_data:
+
+networks:
+  ollama-net:
+    driver: bridge

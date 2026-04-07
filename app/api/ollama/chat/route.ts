@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { model, messages, options, stream } = body;
+    const { model, messages, options, stream, ollamaUrl: clientUrl } = body;
 
     if (!model || !messages) {
       return NextResponse.json(
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+    const ollamaUrl = clientUrl || process.env.OLLAMA_URL || "http://localhost:11434";
 
     console.log("[v0] Enviando chat a Ollama:", {
       model,
@@ -50,10 +50,12 @@ export async function POST(request: NextRequest) {
       options,
     });
 
+    // The Next.js route returns a single JSON response, so we always request
+    // non-streaming from Ollama regardless of what the client asked for.
     const payload: any = {
       model,
       messages,
-      stream: stream ?? false,
+      stream: false,
     };
 
     if (options) {
@@ -97,7 +99,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await response.json();
+    // With stream:false Ollama returns a single JSON object, but some versions
+    // still use NDJSON. Handle both: read as text, parse the last non-empty line.
+    const text = await response.text();
+    const lines = text.split("\n").filter((l) => l.trim() !== "");
+    const data = JSON.parse(lines[lines.length - 1]);
     console.log("[v0] Respuesta recibida de Ollama exitosamente");
     return NextResponse.json(data);
   } catch (error) {

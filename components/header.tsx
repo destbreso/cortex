@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Menu, Bot } from "lucide-react"
-import { SettingsDialog } from "./settings-dialog"
+import { SettingsSheet } from "./settings-sheet"
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -32,7 +32,7 @@ export function Header({ onMenuClick, selectedModel }: HeaderProps) {
             </div>
           )}
 
-          <SettingsDialog />
+          <SettingsSheet />
         </div>
       </div>
     </header>

@@ -4,12 +4,12 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.app",
+  title: "Ollama Chat",
+  description: "Local AI chat powered by Ollama",
 }
 
 export default function RootLayout({
@@ -18,9 +18,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="es" suppressHydrationWarning>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <Suspense fallback={null}>{children}</Suspense>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <Suspense fallback={null}>{children}</Suspense>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>
