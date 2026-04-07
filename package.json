@@ -9,7 +9,7 @@
     "start": "next start",
     "stack:up": "docker compose up --build -d",
     "stack:down": "docker compose down",
-    "stack:restart": "docker compose down && docker compose up --build -d",
+    "stack:restart": "docker compose down --remove-orphans && docker compose up --build -d",
     "stack:logs": "docker logs cortex -f"
   },
   "dependencies": {
